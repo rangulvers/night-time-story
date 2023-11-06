@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story and Image Generator</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Story Generator</h1>
+        <form id="storyForm" class="mb-3">
+            <div class="form-group">
+                <input type="text" name="textInput" class="form-control" placeholder="Enter your story idea here" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Generate Story</button>
+        </form>
+
+        <div id="loadingIndicator" class="text-center hidden">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p>Generating your story, please wait...</p>
+        </div>
+
+        <div id="storySection" class="hidden">
+            <h2>Generated Story:</h2>
+            <p id="generatedStory"></p>
+        </div>
+        
+        <div id="imagesSection" class="hidden">
+            <h2>Images:</h2>
+            <div id="imagesContainer" class="d-flex flex-wrap">
+                <!-- Images will be appended here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Socket.IO client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        document.getElementById('storyForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const textInput = document.querySelector('[name="textInput"]').value;
+            socket.emit('generateStory', textInput);
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('storySection').classList.add('hidden');
+            document.getElementById('imagesSection').classList.add('hidden');
+        });
+
+        socket.on('newImage', function (imageUrl) {
+            const imageElement = document.createElement('img');
+            imageElement.src = imageUrl;
+            imageElement.alt = 'Generated Image';
+            imageElement.classList.add('img-thumbnail', 'm-2');
+            imageElement.style.width = '200px';
+            imageElement.style.height = 'auto';
+            document.getElementById('imagesContainer').appendChild(imageElement);
+            document.getElementById('imagesSection').classList.remove('hidden');
+        });
+
+        socket.on('storyGenerated', function (data) {
+            document.getElementById('generatedStory').textContent = data.story;
+            document.getElementById('storySection').classList.remove('hidden');
+            document.getElementById('loadingIndicator').classList.add('hidden');
+        });
+
+        socket.on('error', function (errorMessage) {
+            document.getElementById('loadingIndicator').classList.add('hidden');
+            alert('Error: ' + errorMessage);
+        });
+    </script>
+    <!-- Include Bootstrap JS and its dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.9/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
